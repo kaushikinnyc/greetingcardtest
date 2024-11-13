@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Canvas</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            overflow: hidden; /* Prevent scrolling */
+        }
+        canvas {
+            border: 1px solid #ccc;
+            max-width: 100vw; /* Responsive width */
+            max-height: 100vh; /* Responsive height */
+        }
+        #controls {
+            margin-top: 20px;
+            position: absolute;
+            bottom: 20px; /* Stick to the bottom */
+        }
+        input[type="text"], input[type="file"] {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<div id="controls">
+    <input type="text" id="textInput" placeholder="Add your text here" />
+    <input type="file" id="imageInput" accept="image/*" />
+    <button id="downloadBtn">Download Image</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const textInput = document.getElementById('textInput');
+    const imageInput = document.getElementById('imageInput');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    const backgroundImg = new Image();
+    backgroundImg.src = 'test1.png'; // Your background image
+    let uploadedImage = new Image();
+    let imgX = 0, imgY = 0;
+    let isDragging = false;
+    let offsetX = 0, offsetY = 0;
+
+    // Load the background image and set canvas size
+    backgroundImg.onload = () => {
+        resizeCanvas();
+        draw();
+    };
+
+    // Resize canvas based on the background image aspect ratio
+    function resizeCanvas() {
+        const aspectRatio = backgroundImg.width / backgroundImg.height;
+        if (window.innerWidth / window.innerHeight < aspectRatio) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerWidth / aspectRatio;
+        } else {
+            canvas.height = window.innerHeight;
+            canvas.width = window.innerHeight * aspectRatio;
+        }
+        draw();
+    }
+
+    // Draw background, uploaded image, and text
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(uploadedImage, imgX, imgY); // Draw uploaded image first (behind background)
+        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height); // Draw background
+        ctx.font = '40px Arial';
+        ctx.fillStyle = '#e9d088';
+        ctx.fillText(textInput.value, 120, 650);
+    }
+
+    // Handle text input
+    textInput.addEventListener('input', draw);
+
+    // Handle image upload
+    imageInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            uploadedImage.src = e.target.result;
+            uploadedImage.onload = draw;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Dragging the uploaded image
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        if (mouseX >= imgX && mouseX <= imgX + uploadedImage.width &&
+            mouseY >= imgY && mouseY <= imgY + uploadedImage.height) {
+            isDragging = true;
+            offsetX = mouseX - imgX;
+            offsetY = mouseY - imgY;
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const rect = canvas.getBoundingClientRect();
+            imgX = e.clientX - rect.left - offsetX;
+            imgY = e.clientY - rect.top - offsetY;
+            draw();
+        }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        isDragging = false;
+    });
+
+    // Download the combined image
+    downloadBtn.addEventListener('click', () => {
+        const finalCanvas = document.createElement('canvas');
+        const finalCtx = finalCanvas.getContext('2d');
+        finalCanvas.width = canvas.width;
+        finalCanvas.height = canvas.height;
+
+        // Draw the uploaded image and background for download
+        finalCtx.drawImage(uploadedImage, imgX, imgY); // Draw uploaded image first (behind background)
+        finalCtx.drawImage(backgroundImg, 0, 0, finalCanvas.width, finalCanvas.height); // Draw background
+        finalCtx.font = '40px Arial';
+        finalCtx.fillStyle = '#e9d088';
+        finalCtx.fillText(textInput.value, 120, 650);
+
+        // Create download link
+        const link = document.createElement('a');
+        link.download = 'final_image.png';
+        link.href = finalCanvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // Resize canvas on window resize
+    window.addEventListener('resize', resizeCanvas);
+</script>
+
+</body>
+</html>
