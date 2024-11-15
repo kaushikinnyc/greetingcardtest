@@ -66,24 +66,21 @@
     const canvasContainer = document.getElementById('canvasContainer');
 
     const backgroundImg = new Image();
-    backgroundImg.src = 'test1.png'; // Your background image
     let uploadedImage = new Image();
     let imgX = 0, imgY = 0;
     let imgScale = 1; // Scale for the uploaded image
     let isDragging = false;
     let offsetX = 0, offsetY = 0;
 
-    // Load the background image and set canvas size
-    backgroundImg.onload = () => {
-        resizeCanvas();
-        draw();
-    };
+    // Load the background image
+    backgroundImg.src = 'test1.png'; // Your background image
 
-    // Handle error loading the background image
-    backgroundImg.onerror = () => {
-        console.error("Failed to load image. Check the path.");
-        alert("Background image not found. Please check the file path.");
-    };
+    window.addEventListener('load', () => {
+        backgroundImg.onload = () => {
+            resizeCanvas();
+            draw();
+        };
+    });
 
     // Resize canvas to fit the viewport while maintaining aspect ratio
     function resizeCanvas() {
@@ -118,7 +115,7 @@
         if (uploadedImage.src) {
             const scaledWidth = uploadedImage.width * imgScale * (canvas.width / backgroundImg.width);
             const scaledHeight = uploadedImage.height * imgScale * (canvas.height / backgroundImg.height);
-            ctx.drawImage(uploadedImage, imgX, imgY, scaledWidth, scaledHeight); // Draw uploaded image behind
+            ctx.drawImage(uploadedImage, imgX, imgY, scaledWidth, scaledHeight);
         }
 
         // Draw the background image on top
@@ -126,24 +123,24 @@
 
         // Draw the text
         const text = formatText(textInput.value);
-        ctx.font = `${55 * (canvas.height / backgroundImg.height)}px Cormorant Garamond`; // Scale font size
+        ctx.font = `${55 * (canvas.height / backgroundImg.height)}px Cormorant Garamond`;
         ctx.fillStyle = '#e9d088';
 
-        const lineHeight = 50 * (canvas.height / backgroundImg.height); // Scale line height
-        const x = canvas.width / 2; // Center X
+        const lineHeight = 50 * (canvas.height / backgroundImg.height);
+        const x = canvas.width / 2;
         let y = 1625 * (canvas.height / backgroundImg.height); // Base Y position
 
         text.forEach((line) => {
             const textWidth = ctx.measureText(line).width;
             ctx.fillText(line, x - textWidth / 2, y);
-            y += lineHeight; // Move down for the next line
+            y += lineHeight;
         });
     }
 
     // Format text into lines, breaking at word boundaries
     function formatText(input) {
         const lines = [];
-        const words = input.split(' '); // Split by spaces
+        const words = input.split(' ');
         let currentLine = '';
 
         words.forEach(word => {
@@ -171,15 +168,15 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             uploadedImage.src = e.target.result;
-            uploadedImage.onload = draw; // Ensure we draw after the image loads
+            uploadedImage.onload = draw;
         };
         reader.readAsDataURL(file);
     });
 
     // Handle size slider
     sizeSlider.addEventListener('input', (e) => {
-        imgScale = e.target.value / 100; // Convert to a scale factor (0.5 to 1.5)
-        draw(); // Redraw the canvas with the new scale
+        imgScale = e.target.value / 100;
+        draw();
     });
 
     // Dragging the uploaded image with mouse
@@ -190,11 +187,11 @@
 
     // Dragging the uploaded image with touch
     canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Prevent scrolling
+        e.preventDefault();
         startDragging(e.touches[0]);
     });
     canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault(); // Prevent scrolling
+        e.preventDefault();
         dragImage(e.touches[0]);
     });
     canvas.addEventListener('touchend', stopDragging);
@@ -231,8 +228,8 @@
     // Upload the combined image to Cloudinary
     uploadBtn.addEventListener('click', async () => {
         const finalCanvas = document.createElement('canvas');
-        finalCanvas.width = backgroundImg.width; // Use original width for upload
-        finalCanvas.height = backgroundImg.height; // Use original height for upload
+        finalCanvas.width = backgroundImg.width;
+        finalCanvas.height = backgroundImg.height;
         const finalCtx = finalCanvas.getContext('2d');
 
         // Draw the uploaded image first (to appear behind the background)
@@ -247,7 +244,7 @@
 
         // Draw the text
         const text = formatText(textInput.value);
-        finalCtx.font = '55px Cormorant Garamond'; // Use fixed font size for upload
+        finalCtx.font = '55px Cormorant Garamond'; // Fixed font size for upload
         finalCtx.fillStyle = '#e9d088';
 
         const lineHeight = 50;
