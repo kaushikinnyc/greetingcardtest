@@ -10,13 +10,15 @@ window.onload = function () {
   const tabDescription = tab.querySelector('p');
 
   const backgroundImage = new Image();
-  backgroundImage.src = '/test1.png'; // Replace with your actual background image path
+  backgroundImage.src = 'test1.png'; // Replace with your actual background image path
 
   let uploadedImage = null;
   let uploadedImageScale = 1;
   let uploadedImagePosition = { x: 0, y: 0 }; // Initial position of the uploaded image
   let isDragging = false;
   let dragStart = { x: 0, y: 0 }; // Coordinates where drag started
+  let userText = ""; // Variable to store user input text
+  let isUploaded = false; // Flag to track if image has been uploaded
 
   // Resize canvas to fit the screen and draw background
   function resizeCanvas() {
@@ -59,13 +61,27 @@ window.onload = function () {
       ctx.drawImage(uploadedImage, imgX, imgY, scaledWidth, scaledHeight);
     }
 
+    // Draw user text if available
+    if (userText) {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'white';
+      ctx.font = '32px Arial'; // Customize the font size and family
+      const textX = (canvas.width - ctx.measureText(userText).width) / 2; // Center the text horizontally
+      const textY = canvas.height - 50; // Position the text 50px from the bottom
+      ctx.fillText(userText, textX, textY);
+    }
+
     ctx.restore();
   }
 
   backgroundImage.onload = resizeCanvas;
   window.addEventListener('resize', resizeCanvas);
 
-  uploadBtn.addEventListener('click', () => fileInput.click());
+  uploadBtn.addEventListener('click', () => {
+    if (!isUploaded) {  // Check if the image has not been uploaded yet
+      fileInput.click();  // Open the file input
+    }
+  });
 
   fileInput.addEventListener('change', (event) => {
     const file = event.target.files[0];
@@ -82,6 +98,10 @@ window.onload = function () {
           uploadBtn.textContent = "Next";
           uploadBtn.classList.replace("upload-btn", "next-btn");
           scaleSlider.style.display = "block";
+
+          // After uploading, hide the file input and set the flag
+          fileInput.style.display = "none";  // Hide file input after upload
+          isUploaded = true; // Set flag to true
         };
       };
       reader.readAsDataURL(file);
@@ -139,4 +159,62 @@ window.onload = function () {
   });
 
   canvas.addEventListener('touchend', endDrag);
+
+  // Add event listener for the Next button
+  uploadBtn.addEventListener('click', () => {
+    if (uploadBtn.textContent === "Next") {
+      // Clear the contents of the tab and update the text
+      tabTitle.textContent = "Add a message";
+      tabDescription.textContent = "Enter a short message to be printed on your card below";
+      
+      // Remove the scale slider and file input
+      scaleSlider.style.display = "none";
+
+      // Create and add a text field for user input
+      const messageField = document.createElement('input');
+      messageField.type = 'text';
+      messageField.id = 'messageField';
+      messageField.placeholder = "Your message here";
+      messageField.style.border = "2px solid #C8102E"; // Red border color to match the theme
+      messageField.style.padding = "10px";
+      messageField.style.borderRadius = "10px";
+      messageField.style.width = "80%";
+      messageField.style.marginTop = "20px";
+      tab.appendChild(messageField);
+
+      // Change the Next button text to "Finish"
+      uploadBtn.textContent = "Finish";
+    } else if (uploadBtn.textContent === "Finish") {
+      // Capture the text entered by the user
+      const messageField = document.getElementById('messageField');
+      userText = messageField.value; // Set the user text
+      
+      // Trigger the canvas update with the text
+      resizeCanvas();
+
+      // Convert canvas to image data
+      const imageData = canvas.toDataURL('image/png'); // This is the base64 data of the canvas image
+
+      // Prepare the data to upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', imageData);
+      formData.append('upload_preset', 'greetingcard1');
+      formData.append('api_key', '929982236717351'); // Replace with your actual Cloudinary API key
+
+      // Send the image to Cloudinary
+      fetch('https://api.cloudinary.com/v1_1/dyn8tf9kn/image/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Image uploaded successfully:', data);
+        alert('Your card has been uploaded successfully!');
+      })
+      .catch(error => {
+        console.error('Error uploading image:', error);
+        alert('Failed to upload image. Please try again.');
+      });
+    }
+  });
 };
