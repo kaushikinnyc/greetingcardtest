@@ -95,15 +95,17 @@ window.onload = function () {
   });
 
   function startDrag(clientX, clientY) {
-    const scaledWidth = uploadedImage.width * uploadedImageScale;
-    const scaledHeight = uploadedImage.height * uploadedImageScale;
-    const imgX = (canvas.width - scaledWidth) / 2 + uploadedImagePosition.x;
-    const imgY = (canvas.height - scaledHeight) / 2 + uploadedImagePosition.y;
+    if (uploadedImage) { // Check if the image is loaded
+      const scaledWidth = uploadedImage.width * uploadedImageScale;
+      const scaledHeight = uploadedImage.height * uploadedImageScale;
+      const imgX = (canvas.width - scaledWidth) / 2 + uploadedImagePosition.x;
+      const imgY = (canvas.height - scaledHeight) / 2 + uploadedImagePosition.y;
 
-    if (clientX >= imgX && clientX <= imgX + scaledWidth && clientY >= imgY && clientY <= imgY + scaledHeight) {
-      isDragging = true;
-      dragStart.x = clientX - uploadedImagePosition.x;
-      dragStart.y = clientY - uploadedImagePosition.y;
+      if (clientX >= imgX && clientX <= imgX + scaledWidth && clientY >= imgY && clientY <= imgY + scaledHeight) {
+        isDragging = true;
+        dragStart.x = clientX - uploadedImagePosition.x;
+        dragStart.y = clientY - uploadedImagePosition.y;
+      }
     }
   }
 
