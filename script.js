@@ -8,15 +8,15 @@ window.onload = function () {
   const tab = document.querySelector('.tab');
   const tabTitle = tab.querySelector('h1');
   const tabDescription = tab.querySelector('p');
-  
+
   const backgroundImage = new Image();
-  backgroundImage.src = 'test1.png'; // Replace with your actual image path
+  backgroundImage.src = 'test1.png'; // Replace with your actual background image path
 
   let uploadedImage = null;
   let uploadedImageScale = 1;
-  let uploadedImagePosition = { x: 0, y: 0 };  // Initial position of the uploaded image
+  let uploadedImagePosition = { x: 0, y: 0 }; // Initial position of the uploaded image
   let isDragging = false;
-  let dragStart = { x: 0, y: 0 };  // Coordinates where drag started
+  let dragStart = { x: 0, y: 0 }; // Coordinates where drag started
 
   // Resize canvas to fit the screen and draw background
   function resizeCanvas() {
@@ -25,20 +25,9 @@ window.onload = function () {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - tabHeight;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear canvas before redrawing
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
 
-    // Draw uploaded image first (behind the background)
-    if (uploadedImage) {
-      const scaledWidth = uploadedImage.width * uploadedImageScale;
-      const scaledHeight = uploadedImage.height * uploadedImageScale;
-      const imgX = (canvas.width - scaledWidth) / 2 + uploadedImagePosition.x;  // Centering image with drag offset
-      const imgY = (canvas.height - scaledHeight) / 2 + uploadedImagePosition.y;
-
-      ctx.globalCompositeOperation = 'source-over';  // Reset to normal drawing mode
-      ctx.drawImage(uploadedImage, imgX, imgY, scaledWidth, scaledHeight);  // Draw image behind
-    }
-
-    // Draw background image over the uploaded image
+    // Calculate background image rendering dimensions
     const imageAspectRatio = backgroundImage.width / backgroundImage.height;
     const canvasAspectRatio = canvas.width / canvas.height;
 
@@ -55,7 +44,28 @@ window.onload = function () {
       offsetY = 0;
     }
 
-    ctx.drawImage(backgroundImage, offsetX, offsetY, renderWidth, renderHeight);  // Draw background
+    // Draw background image
+    ctx.globalCompositeOperation = 'source-over'; // Restore normal drawing mode
+    ctx.drawImage(backgroundImage, offsetX, offsetY, renderWidth, renderHeight); // Draw background
+
+    // Define clipping path for the uploaded image
+    ctx.save(); // Save current context
+    ctx.beginPath();
+    ctx.rect(offsetX, offsetY, renderWidth, renderHeight); // Clipping region matches background
+    ctx.clip();
+
+    // Draw uploaded image (confined within clipping bounds)
+    if (uploadedImage) {
+      const scaledWidth = uploadedImage.width * uploadedImageScale;
+      const scaledHeight = uploadedImage.height * uploadedImageScale;
+      const imgX = (canvas.width - scaledWidth) / 2 + uploadedImagePosition.x;
+      const imgY = (canvas.height - scaledHeight) / 2 + uploadedImagePosition.y;
+
+      ctx.globalCompositeOperation = 'destination-over'; // Draw the uploaded image behind
+      ctx.drawImage(uploadedImage, imgX, imgY, scaledWidth, scaledHeight);
+    }
+
+    ctx.restore(); // Restore context to remove clipping path
   }
 
   backgroundImage.onload = resizeCanvas;
@@ -132,13 +142,8 @@ window.onload = function () {
     moveDrag(event.clientX, event.clientY);
   });
 
-  canvas.addEventListener('mouseup', () => {
-    endDrag();
-  });
-
-  canvas.addEventListener('mouseleave', () => {
-    endDrag();
-  });
+  canvas.addEventListener('mouseup', endDrag);
+  canvas.addEventListener('mouseleave', endDrag);
 
   // Touch events for mobile devices
   canvas.addEventListener('touchstart', (event) => {
@@ -152,11 +157,6 @@ window.onload = function () {
     event.preventDefault(); // Prevent scrolling while dragging
   });
 
-  canvas.addEventListener('touchend', () => {
-    endDrag();
-  });
-
-  canvas.addEventListener('touchcancel', () => {
-    endDrag();
-  });
+  canvas.addEventListener('touchend', endDrag);
+  canvas.addEventListener('touchcancel', endDrag);
 };
