@@ -10,7 +10,7 @@ window.onload = function () {
   const tabDescription = tab.querySelector('p');
 
   const backgroundImage = new Image();
-  backgroundImage.src = 'test1.png'; // Replace with your actual background image path
+  backgroundImage.src = '/test1.png'; // Replace with your actual background image path
 
   let uploadedImage = null;
   let uploadedImageScale = 1;
